@@ -1,2 +1,5 @@
 .venv/
 compose-*.yml
+__pycache__/
+mindcraft/
+.env
