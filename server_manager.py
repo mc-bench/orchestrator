@@ -161,35 +161,24 @@ class MinecraftServerManager:
             return None
 
     def prepare_building_area(self, llm_id, size=50):
-        """Prepare a flat area for building using WorldEdit"""
+        """Prepare a flat area for building using vanilla commands"""
         with self.connect_rcon(llm_id) as rcon:
             commands = [
-                # Set WorldEdit positions for the area
-                f"worldedit:pos1 ~-{size} ~-1 ~-{size}",
-                f"worldedit:pos2 ~{size} ~50 ~{size}",
-                
-                # Clear the area with WorldEdit
-                "worldedit:set air",
+                # Clear the area
+                f"fill ~-{size} ~-1 ~-{size} ~{size} ~50 ~{size} air",
                 
                 # Create base platform
-                f"worldedit:pos1 ~-{size} ~-1 ~-{size}",
-                f"worldedit:pos2 ~{size} ~-1 ~{size}",
-                "worldedit:set smooth_stone",
+                f"fill ~-{size} ~-1 ~-{size} ~{size} ~-1 ~{size} smooth_stone",
                 
                 # Create grid lines
-                f"worldedit:pos1 ~-{size} ~-1 ~0",
-                f"worldedit:pos2 ~{size} ~-1 ~0",
-                "worldedit:set gray_concrete",
-                
-                f"worldedit:pos1 ~0 ~-1 ~-{size}",
-                f"worldedit:pos2 ~0 ~-1 ~{size}",
-                "worldedit:set gray_concrete",
+                f"fill ~-{size} ~-1 ~0 ~{size} ~-1 ~0 gray_concrete",
+                f"fill ~0 ~-1 ~-{size} ~0 ~-1 ~{size} gray_concrete",
                 
                 # Corner markers
-                "setblock ~{size} ~0 ~{size} minecraft:red_concrete",
-                "setblock ~-{size} ~0 ~{size} minecraft:blue_concrete",
-                "setblock ~{size} ~0 ~-{size} minecraft:green_concrete",
-                "setblock ~-{size} ~0 ~-{size} minecraft:yellow_concrete",
+                f"setblock ~{size} ~0 ~{size} red_concrete",
+                f"setblock ~-{size} ~0 ~{size} blue_concrete", 
+                f"setblock ~{size} ~0 ~-{size} green_concrete",
+                f"setblock ~-{size} ~0 ~-{size} yellow_concrete",
                 
                 # Optimal visibility settings
                 "time set day",
@@ -202,31 +191,6 @@ class MinecraftServerManager:
                 response = rcon.command(cmd)
                 print(f"Command '{cmd}': {response}")
                 time.sleep(0.1)  # Small delay between commands
-
-    def copy_area(self, llm_id, source_pos1, source_pos2, target_pos):
-        """Copy an area using WorldEdit"""
-        with self.connect_rcon(llm_id) as rcon:
-            commands = [
-                f"worldedit:pos1 {source_pos1[0]} {source_pos1[1]} {source_pos1[2]}",
-                f"worldedit:pos2 {source_pos2[0]} {source_pos2[1]} {source_pos2[2]}",
-                "worldedit:copy",
-                f"worldedit:paste {target_pos[0]} {target_pos[1]} {target_pos[2]}"
-            ]
-            
-            for cmd in commands:
-                response = rcon.command(cmd)
-                print(f"Command '{cmd}': {response}")
-                time.sleep(0.1)
-
-    def undo_last_action(self, llm_id):
-        """Undo the last WorldEdit action"""
-        try:
-            with self.connect_rcon(llm_id) as rcon:
-                response = rcon.command("worldedit:undo")
-                return response
-        except Exception as e:
-            print(f"Failed to undo action: {e}")
-            return None
 
     def stop_server(self, llm_id):
         """Stop and cleanup a specific server"""
