@@ -2,6 +2,8 @@
 
 Orchestrator to spin up MC server, run Mindcraft agent, save building and run eval
 
+Please join our [Discord](https://discord.gg/qmsrd7zH) to follow discussions, help plan the roadmap and hear about next steps
+
 ## Setup
 
 ### Prerequisites
