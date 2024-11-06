@@ -31,6 +31,11 @@ Please join our [Discord](https://discord.gg/qmsrd7zH) to follow discussions, he
   pip install -r requirements.txt
   ```
 
+4. Run the server:
+  ```bash
+  python server_manager.py
+  ``` 
+
 ### Usage
 
 The current server manager provides functionality to:
@@ -69,3 +74,12 @@ The server uses Docker containers with the following default settings:
 - Paper server type
 - Minecraft version 1.20.4
 - Optimized JVM settings for performance
+
+### Connecting to the Server
+
+To view the building process in Minecraft:
+1. Open Minecraft Java Edition
+2. Go to Multiplayer
+3. Add Server
+4. Enter `localhost:25565` as the server address
+5. Connect to the server
