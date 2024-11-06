@@ -32,18 +32,23 @@ Please join our [Discord](https://discord.gg/qmsrd7zH) to follow discussions, he
   ```
 
 4. Run the server:
-  ```bash
-  python server_manager.py
-  ``` 
-
+```bash
+python server_manager.py
+```
+  
 ### Usage
 
 The current server manager provides functionality to:
 - Create Minecraft servers dynamically
 - Manage RCON connections
 - Execute commands remotely
-- Prepare building areas
+- Prepare building areas with grid lines and corner markers
 - Clean up servers automatically
+
+Running `server_manager.py` directly will create a demo server that:
+- Starts up a Minecraft server
+- Prepares a 25x25 building area
+- Keeps the server running for 30 seconds to let you explore the world
 
 Basic example:
 
@@ -56,9 +61,9 @@ Basic example:
   llm_id = "my_agent"
   server_id = manager.create_server(llm_id)
 
-  # Wait for server to be ready
+  # Wait for server to be ready (10 minute timeout)
   if manager.wait_for_server_ready(llm_id):
-      # Prepare a 50x50 building area
+      # Prepare a building area with grid lines and corner markers
       manager.prepare_building_area(llm_id, size=50)
 
   # Clean up when done

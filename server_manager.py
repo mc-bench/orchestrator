@@ -217,10 +217,17 @@ if __name__ == "__main__":
 
     try:
         if manager.wait_for_server_ready(llm_id):
-            print("\nPreparing building area...")
+            print("\nServer is ready! You can now connect to localhost:{port}".format(
+                port=manager.servers[llm_id]['port']
+            ))
+            print("Waiting 20 seconds for you to connect...")
+            time.sleep(20)
+            
+            print("\nStarting to prepare the building area...")
             manager.prepare_building_area(llm_id, size=25)
             
-            time.sleep(5)
+            print("\nBuilding area is ready. Keeping server running for 30 seconds so you can observe...")
+            time.sleep(30)
     finally:
         print("\nCleaning up...")
         manager.stop_all_servers()
