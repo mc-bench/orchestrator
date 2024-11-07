@@ -1,41 +1,122 @@
-version: '3'
+version: '3.8'
 
 services:
   mc:
-    image: itzg/minecraft-server
+    image: itzg/minecraft-server:latest
     container_name: mc-llm-{llm_id}
     ports:
       - "{port}:25565"
       - "{rcon_port}:25575"
     environment:
       EULA: "TRUE"
+      VERSION: "1.20.4"
       TYPE: "PAPER"
+      DIFFICULTY: "peaceful"
+      VIEW_DISTANCE: "10"
       MODE: "creative"
-      MEMORY: "2G"
+      LEVEL_TYPE: "flat"
+      GENERATE_STRUCTURES: "false"
+      SPAWN_PROTECTION: "0"
+      MAX_PLAYERS: "20"
+      ENABLE_COMMAND_BLOCK: "true"
+      SPAWN_MONSTERS: "false" 
+      SPAWN_ANIMALS: "false"
+      SPAWN_NPCS: "false"
+      ALLOW_NETHER: "false"
+      MOTD: "Development Test Server"
+      OVERRIDE_SERVER_PROPERTIES: "true"
+      TZ: "UTC"
+      ENABLE_ROLLING_LOGS: "false"
+      EXEC_DIRECTLY: "true"
+      ALLOW_FLIGHT: "true"
+      ONLINE_MODE: "false"
+      MAX_WORLD_SIZE: "1000"
+      INIT_MEMORY: "1G"
+      MAX_MEMORY: "2G"
       ENABLE_RCON: "true"
       RCON_PASSWORD: "{rcon_password}"
       RCON_PORT: "25575"
-      ONLINE_MODE: "false"
-      VERSION: "1.20.4"
-      # Optimized JVM flags for better performance
-      JVM_OPTS: "-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true"
-      INIT_MEMORY: "2G"
-      MAX_MEMORY: "2G"
-      # Optimize view distance
-      VIEW_DISTANCE: "8"
-      # Enable healthchecks
-      ENABLE_HEALTHCHECK: "true"
+      FORCE_GAMEMODE: "true"
+      PLAYER_IDLE_TIMEOUT: "0"
+      ALLOW_CHEATS: "true"
+      DEFAULT_TIME: "6000"
+      TIME_LOCK: "6000"
+      EXISTING_OPS_FILE: "SYNCHRONIZE"
+      PAPER_SPIGOT_YAML: |
+        settings:
+          spam-limiter:
+            tab-spam-increment: 0
+            tab-spam-limit: 999999
+          limit-player-interactions: false
+          use-display-name-in-quit-message: false
+          unsupported-settings:
+            allow-permanent-block-break-exploits: true
+            allow-piston-duplication: true
+            perform-username-validation: false
+        messages:
+          kick:
+            authentication-servers-down: false
+            connection-throttle: false
+            flying-player: false
+            flying-vehicle: false
+        players:
+          disable-spam-limiter: true
+        config-version: 12
+        world-settings:
+          default:
+            tick-rates:
+              mob-spawner: 1
+            game-mechanics:
+              disable-player-interaction-limiter: true
+            misc:
+              disable-player-interaction-limiter: true
+            packet-limiter:
+              kick-threshold: 999999
+              incoming-packet-threshold: 999999
+              max-packet-rate: 999999
+              interval: 10.0
+            packet-limiting:
+              all-packets:
+                action: IGNORE
+                max-packet-rate: 999999
+                interval: 10.0
+            network-compression-threshold: -1
+        network-compression-threshold: -1
+        player-auto-save-rate: -1
+        max-player-auto-save-per-tick: -1
+      SPIGOT_YAML: |
+        settings:
+          timeout-time: 3600000
+          restart-on-crash: false
+          spam-exclusions:
+            - /
+          connection-throttle: -1
+          netty-threads: 8
+        commands:
+          spam-exclusions:
+            - /
+          silent-commandblock-console: true
+          log: false
+        players:
+          disable-spam-limiter: true
+        world-settings:
+          default:
+            mob-spawn-range: 0
+      BUKKIT_YAML: |
+        settings:
+          connection-throttle: -1
+          spam-exclusions:
+            - /
+          timeout-time: 3600000
     volumes:
-      - "mc-data-{llm_id}:/data"
+      - ./data:/data
+      - ./ops.json:/data/ops.json
     tty: true
     stdin_open: true
-    restart: "unless-stopped"
+    restart: unless-stopped
     healthcheck:
       test: mc-health
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 1m
-
-volumes:
-  mc-data-{llm_id}:

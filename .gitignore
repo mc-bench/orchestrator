@@ -1,2 +1,8 @@
 .venv/
 compose-*.yml
+.env
+__pycache__/
+data/
+instructor.md
+mineflayer_docs.md
+ops.json

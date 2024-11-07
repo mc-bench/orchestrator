@@ -208,6 +208,16 @@ class MinecraftServerManager:
         for llm_id in list(self.servers.keys()):
             self.stop_server(llm_id)
 
+    def op_players(self, llm_id, players):
+        """Give operator privileges to specified players"""
+        try:
+            with self.connect_rcon(llm_id) as rcon:
+                for player in players:
+                    response = rcon.command(f"op {player}")
+                    print(f"Opping {player}: {response}")
+        except Exception as e:
+            print(f"Failed to op players on server {llm_id}: {e}")
+
 if __name__ == "__main__":
     manager = MinecraftServerManager()
 
@@ -220,14 +230,19 @@ if __name__ == "__main__":
             print("\nServer is ready! You can now connect to localhost:{port}".format(
                 port=manager.servers[llm_id]['port']
             ))
+            
+            # Op the specified players
+            players_to_op = ["Builder", "tyfvenom"]
+            manager.op_players(llm_id, players_to_op)
+            
             print("Waiting 20 seconds for you to connect...")
             time.sleep(20)
             
             print("\nStarting to prepare the building area...")
             manager.prepare_building_area(llm_id, size=25)
             
-            print("\nBuilding area is ready. Keeping server running for 30 seconds so you can observe...")
-            time.sleep(30)
+            print("\nBuilding area is ready. Keeping server running for 60 seconds so you can observe...")
+            time.sleep(60)
     finally:
         print("\nCleaning up...")
-        manager.stop_all_servers()
+        # manager.stop_all_servers()
