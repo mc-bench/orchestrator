@@ -5,6 +5,8 @@ import docker
 import secrets
 from pathlib import Path
 from mcrcon import MCRcon
+from celery import Celery
+from celery.result import AsyncResult
 
 class MinecraftServerManager:
     def __init__(self, base_port=25565):
@@ -16,6 +18,9 @@ class MinecraftServerManager:
         with open('base-compose.yml', 'r') as f:
             self.base_template = f.read()
             
+        self.celery = Celery('minecraft_builder',
+                            broker=os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0'))
+        
     def create_server(self, llm_id):
         """Create a new Minecraft server for a given LLM"""
         server_id = str(uuid.uuid4())[:8]
@@ -218,31 +223,37 @@ class MinecraftServerManager:
         except Exception as e:
             print(f"Failed to op players on server {llm_id}: {e}")
 
-if __name__ == "__main__":
-    manager = MinecraftServerManager()
+    async def process_build_job(self, job_id, function_definition):
+        """Process a build job from start to finish"""
+        try:
+            # Create server
+            server_id = self.create_server(job_id)
+            if not server_id:
+                raise Exception("Failed to create server")
 
-    llm_id = "llm1"
-    print(f"\nCreating server for {llm_id}...")
-    server1 = manager.create_server(llm_id)
+            # Wait for server ready
+            if not self.wait_for_server_ready(job_id):
+                raise Exception("Server failed to start")
 
-    try:
-        if manager.wait_for_server_ready(llm_id):
-            print("\nServer is ready! You can now connect to localhost:{port}".format(
-                port=manager.servers[llm_id]['port']
-            ))
-            
-            # Op the specified players
-            players_to_op = ["Builder", "tyfvenom"]
-            manager.op_players(llm_id, players_to_op)
-            
-            print("Waiting 20 seconds for you to connect...")
-            time.sleep(20)
-            
-            print("\nStarting to prepare the building area...")
-            manager.prepare_building_area(llm_id, size=25)
-            
-            print("\nBuilding area is ready. Keeping server running for 60 seconds so you can observe...")
-            time.sleep(60)
-    finally:
-        print("\nCleaning up...")
-        # manager.stop_all_servers()
+            # Prepare building area
+            self.prepare_building_area(job_id)
+
+            # Submit build task
+            task = self.celery.send_task(
+                'mineflayer.build_structure',
+                args=[function_definition],
+                kwargs={}
+            )
+
+            # Wait for build completion
+            result = AsyncResult(task.id, app=self.celery)
+            build_result = result.get(timeout=600)  # 10 minute timeout
+
+            if build_result['status'] != 'success':
+                raise Exception(f"Build failed: {build_result.get('error')}")
+
+            return build_result
+
+        finally:
+            # Always cleanup the server
+            self.stop_server(job_id)
