@@ -13,9 +13,11 @@ celery_app = Celery('minecraft_builder',
                     broker=os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0'))
 
 @celery_app.task(name='minecraft_builder.build_structure')
-def build_structure_task(function_definition):
+def build_structure_task(build_data):
     """Celery task wrapper for build_structure"""
-    return build_structure(function_definition)
+    function_definition = build_data.get('function_definition')
+    metadata = build_data.get('metadata', {})
+    return build_structure(function_definition, metadata)
 
 class MinecraftBuildService:
     def __init__(self, batch_size: int = 1):
@@ -61,9 +63,11 @@ class MinecraftBuildService:
             for task in tasks:
                 if len(jobs) >= self.batch_size:
                     break
+                build_data = task['args'][0] if task['args'] else {}
                 jobs.append({
                     'id': task['id'],
-                    'function_definition': task['args'][0] if task['args'] else None
+                    'function_definition': build_data.get('function_definition'),
+                    'metadata': build_data.get('metadata', {})
                 })
         return jobs
 

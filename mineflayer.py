@@ -15,10 +15,16 @@ USERNAME = os.getenv('USERNAME', 'builder')
 DELAY = int(os.getenv('DELAY', '1000'))  # Increased delay to prevent spamming
 STRUCTURE_NAME = os.getenv('STRUCTURE_NAME', f'structure_{time.strftime("%Y-%m-%dT%H-%M-%S")}')
 
-def build_structure(function_definition):
+def build_structure(function_definition, metadata=None):
     """Build a structure from a function definition"""
     try:
         global bot, commandQueue, coordinateTracker
+
+        # Log metadata if provided
+        if metadata:
+            print(f"Building structure: {metadata.get('name', 'Unnamed')}")
+            print(f"Author: {metadata.get('author', 'Unknown')}")
+            print(f"Description: {metadata.get('description', 'No description')}")
 
         BOT_USERNAME = f'Builder'
 
@@ -67,7 +73,8 @@ def build_structure(function_definition):
         return {
             'status': 'success',
             'structure_name': structure_name,
-            'dimensions': coordinateTracker.getDimensions()
+            'dimensions': coordinateTracker.getDimensions(),
+            'metadata': metadata
         }
 
     except Exception as e:
@@ -76,7 +83,8 @@ def build_structure(function_definition):
             bot.quit()
         return {
             'status': 'error',
-            'error': str(e)
+            'error': str(e),
+            'metadata': metadata
         }
 
 # Command queue system

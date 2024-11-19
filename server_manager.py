@@ -223,7 +223,7 @@ class MinecraftServerManager:
         except Exception as e:
             print(f"Failed to op players on server {llm_id}: {e}")
 
-    async def process_build_job(self, job_id, function_definition):
+    async def process_build_job(self, job_id, function_definition, metadata=None):
         """Process a build job from start to finish"""
         try:
             # Create server
@@ -238,11 +238,15 @@ class MinecraftServerManager:
             # Prepare building area
             self.prepare_building_area(job_id)
 
-            # Submit build task
+            # Submit build task with proper format
+            build_data = {
+                'function_definition': function_definition,
+                'metadata': metadata or {}
+            }
+            
             task = self.celery.send_task(
-                'mineflayer.build_structure',
-                args=[function_definition],
-                kwargs={}
+                'minecraft_builder.build_structure',  # Matches the task name in build_service.py
+                args=[build_data]                    # Proper argument format
             )
 
             # Wait for build completion
