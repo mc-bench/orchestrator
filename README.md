@@ -68,6 +68,11 @@ This is the core of the orchestrator. It:
 - Handles multiple jobs concurrently (configurable batch size)
 - Implements error handling and logging
 
+The job object in `build_service.py` contains:
+- `id`: A unique identifier for the job
+- `function_definition`: The Python code defining the build function
+- `metadata`: Additional information about the build (e.g., name, author, description)
+
 #### server_manager.py
 
 This component manages the lifecycle of Minecraft servers:
@@ -86,12 +91,20 @@ This script interfaces with the Minecraft server to perform building actions:
 - Tracks coordinates of placed blocks
 - Handles structure saving
 
+In `mineflayer.py`, the build task is executed through the `build_structure` function, which takes:
+- `function_definition`: The Python code to execute for building
+- `metadata`: Additional information about the build
+
 #### test.py
 
 A utility script for testing the orchestrator:
 - Submits a sample build job to the Redis queue
 - Monitors the progress of the job
 - Displays the results of the build
+
+The `test.py` script creates a sample build job with:
+- `function_definition`: A Python function that builds a simple house
+- `metadata`: Information about the build (name, author, version, description, tags, creation time)
 
 ## Usage
 
