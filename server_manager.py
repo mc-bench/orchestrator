@@ -3,10 +3,15 @@ import uuid
 import time
 import docker
 import secrets
+import logging
 from pathlib import Path
 from mcrcon import MCRcon
 from celery import Celery
 from celery.result import AsyncResult
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class MinecraftServerManager:
     def __init__(self, base_port=25565):
@@ -15,11 +20,20 @@ class MinecraftServerManager:
         self.client = docker.from_env()
         
         # Load base compose template
-        with open('base-compose.yml', 'r') as f:
-            self.base_template = f.read()
-            
+        try:
+            with open('base-compose.yml', 'r') as f:
+                self.base_template = f.read()
+        except FileNotFoundError:
+            logger.error("base-compose.yml not found. Ensure it exists in the current directory.")
+            raise
+        except IOError as e:
+            logger.error(f"Error reading base-compose.yml: {e}")
+            raise
+        
         self.celery = Celery('minecraft_builder',
-                            broker=os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0'))
+                             broker=os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0'))
+        
+        logger.info("MinecraftServerManager initialized successfully.")
         
     def create_server(self, llm_id):
         """Create a new Minecraft server for a given LLM"""
@@ -27,6 +41,8 @@ class MinecraftServerManager:
         port = self.base_port + len(self.servers)
         rcon_port = port + 10
         rcon_password = secrets.token_urlsafe(16)
+
+        logger.info(f"Creating new server for LLM ID: {llm_id}, Server ID: {server_id}")
 
         compose_content = self.base_template.format(
             llm_id=server_id,
@@ -36,12 +52,18 @@ class MinecraftServerManager:
         )
 
         compose_file = f'compose-{server_id}.yml'
-        with open(compose_file, 'w') as f:
-            f.write(compose_content)
+        try:
+            with open(compose_file, 'w') as f:
+                f.write(compose_content)
+        except IOError as e:
+            logger.error(f"Failed to write compose file {compose_file}: {e}")
+            return None
 
         # Start the container with explicit project name
         project_name = f"mc-{server_id}"
-        os.system(f'docker-compose -p {project_name} -f {compose_file} up -d')
+        start_command = f'docker-compose -p {project_name} -f {compose_file} up -d'
+        logger.info(f"Starting container with command: {start_command}")
+        os.system(start_command)
         
         # Store server info
         self.servers[llm_id] = {
@@ -55,7 +77,7 @@ class MinecraftServerManager:
 
         # Wait for container to be running
         container_name = f"mc-llm-{server_id}"
-        print(f"Waiting for container {container_name} to start...")
+        logger.info(f"Waiting for container {container_name} to start...")
         
         retries = 0
         max_retries = 10
@@ -66,21 +88,21 @@ class MinecraftServerManager:
                 )
                 if containers:
                     container = containers[0]
-                    print(f"Container {container_name} is {container.status}")
+                    logger.info(f"Container {container_name} is {container.status}")
                     break
                 retries += 1
                 time.sleep(3)
             except docker.errors.NotFound:
-                print(f"Waiting for container to be created... (attempt {retries+1}/{max_retries})")
+                logger.warning(f"Waiting for container to be created... (attempt {retries+1}/{max_retries})")
                 time.sleep(3)
                 continue
         
         if retries >= max_retries:
-            print("Failed to find container after maximum retries")
+            logger.error("Failed to find container after maximum retries")
             return None
 
         # Initial delay to let server start up
-        print("Waiting for initial server startup...")
+        logger.info("Waiting for initial server startup...")
         time.sleep(45)  # Increased initial wait time
 
         return server_id
@@ -89,6 +111,7 @@ class MinecraftServerManager:
         """Wait for server to be ready with improved retry logic"""
         server_info = self.servers.get(llm_id)
         if not server_info:
+            logger.error(f"No server found for LLM {llm_id}")
             raise ValueError(f"No server found for LLM {llm_id}")
             
         start_time = time.time()
@@ -100,7 +123,7 @@ class MinecraftServerManager:
         try:
             container = self.client.containers.get(container_name)
         except docker.errors.NotFound:
-            print(f"Container {container_name} not found")
+            logger.error(f"Container {container_name} not found")
             return False
         
         while time.time() - start_time < timeout:
@@ -108,39 +131,40 @@ class MinecraftServerManager:
                 # Check container logs for successful startup
                 logs = container.logs(tail=50).decode('utf-8')
                 if "Done" in logs:  # Server typically logs "Done!" when ready
-                    print("Server initialization detected in logs")
+                    logger.info("Server initialization detected in logs")
                     
                     # Try RCON connection
                     with MCRcon("localhost", 
-                              server_info['rcon_password'],
-                              port=server_info['rcon_port']) as rcon:
+                                server_info['rcon_password'],
+                                port=server_info['rcon_port']) as rcon:
                         response = rcon.command("list")
                         if response:
-                            print(f"Server {llm_id} is ready!")
+                            logger.info(f"Server {llm_id} is ready!")
                             return True
 
             except ConnectionRefusedError:
-                print(f"Server starting up... (waiting {retry_interval}s)")
+                logger.info(f"Server starting up... (waiting {retry_interval}s)")
             except Exception as e:
-                print(f"Waiting for server... ({str(e)})")
+                logger.warning(f"Waiting for server... ({str(e)})")
                 
             # Check if container is still running
             container.reload()
             if container.status != "running":
-                print(f"Container stopped unexpectedly. Status: {container.status}")
+                logger.error(f"Container stopped unexpectedly. Status: {container.status}")
                 return False
 
             # Exponential backoff with max limit
             time.sleep(retry_interval)
             retry_interval = min(retry_interval * 1.5, max_retry_interval)
                     
-        print(f"Server {llm_id} failed to become ready within {timeout} seconds")
+        logger.error(f"Server {llm_id} failed to become ready within {timeout} seconds")
         return False
 
     def connect_rcon(self, llm_id):
         """Establish RCON connection to a server"""
         server_info = self.servers.get(llm_id)
         if not server_info:
+            logger.error(f"No server found for LLM {llm_id}")
             raise ValueError(f"No server found for LLM {llm_id}")
             
         rcon = MCRcon(
@@ -156,13 +180,15 @@ class MinecraftServerManager:
         try:
             with self.connect_rcon(llm_id) as rcon:
                 response = rcon.command(command)
+                logger.info(f"Command executed on server {llm_id}: {command}")
                 return response
         except Exception as e:
-            print(f"Failed to execute command on server {llm_id}: {e}")
+            logger.error(f"Failed to execute command on server {llm_id}: {e}")
             return None
 
     def prepare_building_area(self, llm_id, size=50):
         """Prepare a flat area for building using vanilla commands"""
+        logger.info(f"Preparing building area for server {llm_id}")
         with self.connect_rcon(llm_id) as rcon:
             commands = [
                 # Clear the area
@@ -190,28 +216,37 @@ class MinecraftServerManager:
             
             for cmd in commands:
                 response = rcon.command(cmd)
-                print(f"Command '{cmd}': {response}")
+                logger.debug(f"Command '{cmd}': {response}")
                 time.sleep(0.1)  # Small delay between commands
+
+        logger.info(f"Building area prepared for server {llm_id}")
 
     def stop_server(self, llm_id):
         """Stop and cleanup a specific server"""
         server_info = self.servers.get(llm_id)
         if not server_info:
+            logger.warning(f"No server found for LLM {llm_id} to stop")
             return
             
         # Stop the server using project name
-        os.system(f'docker-compose -p {server_info["project_name"]} -f {server_info["compose_file"]} down -v')
+        stop_command = f'docker-compose -p {server_info["project_name"]} -f {server_info["compose_file"]} down -v'
+        logger.info(f"Stopping server {llm_id} with command: {stop_command}")
+        os.system(stop_command)
         
         # Cleanup compose file
         if os.path.exists(server_info["compose_file"]):
             os.remove(server_info["compose_file"])
+            logger.info(f"Removed compose file: {server_info['compose_file']}")
             
         del self.servers[llm_id]
+        logger.info(f"Server {llm_id} stopped and cleaned up")
         
     def stop_all_servers(self):
         """Stop all servers"""
+        logger.info("Stopping all servers")
         for llm_id in list(self.servers.keys()):
             self.stop_server(llm_id)
+        logger.info("All servers stopped")
 
     def op_players(self, llm_id, players):
         """Give operator privileges to specified players"""
@@ -219,45 +254,67 @@ class MinecraftServerManager:
             with self.connect_rcon(llm_id) as rcon:
                 for player in players:
                     response = rcon.command(f"op {player}")
-                    print(f"Opping {player}: {response}")
+                    logger.info(f"Opping player {player} on server {llm_id}: {response}")
         except Exception as e:
-            print(f"Failed to op players on server {llm_id}: {e}")
+            logger.error(f"Failed to op players on server {llm_id}: {e}")
 
     async def process_build_job(self, job_id, function_definition, metadata=None):
         """Process a build job from start to finish"""
+        logger.info(f"Starting build job {job_id}")
         try:
             # Create server
             server_id = self.create_server(job_id)
             if not server_id:
                 raise Exception("Failed to create server")
 
-            # Wait for server ready
-            if not self.wait_for_server_ready(job_id):
+            # Wait for server ready with increased timeout
+            if not self.wait_for_server_ready(job_id, timeout=120):  # Increased to 2 minutes
                 raise Exception("Server failed to start")
 
             # Prepare building area
             self.prepare_building_area(job_id)
 
-            # Submit build task with proper format
-            build_data = {
-                'function_definition': function_definition,
-                'metadata': metadata or {}
-            }
+            # Set environment variables for mineflayer
+            server_info = self.servers[job_id]
+            os.environ['HOST'] = 'localhost'
+            os.environ['PORT'] = str(server_info['port'])
+            os.environ['USERNAME'] = 'Builder'
             
-            task = self.celery.send_task(
-                'minecraft_builder.build_structure',  # Matches the task name in build_service.py
-                args=[build_data]                    # Proper argument format
-            )
+            # Add additional delay for server stability
+            logger.info("Waiting for server to stabilize...")
+            time.sleep(20)  # Increased from 10 to 20 seconds
 
-            # Wait for build completion
-            result = AsyncResult(task.id, app=self.celery)
-            build_result = result.get(timeout=600)  # 10 minute timeout
+            # Verify server is accepting connections via RCON
+            retries = 3
+            while retries > 0:
+                try:
+                    with self.connect_rcon(job_id) as rcon:
+                        response = rcon.command("list")
+                        logger.info(f"Server response: {response}")
+                        break
+                except Exception as e:
+                    logger.warning(f"RCON connection attempt failed ({retries} retries left): {e}")
+                    retries -= 1
+                    if retries == 0:
+                        raise Exception("Server not responding to RCON commands")
+                    time.sleep(5)
 
-            if build_result['status'] != 'success':
-                raise Exception(f"Build failed: {build_result.get('error')}")
+            # Execute build with retry logic
+            from mineflayer import build_structure
+            logger.info(f"Executing build for job {job_id}")
+            result = build_structure(function_definition, metadata)
+            logger.info(f"Build completed for job {job_id}")
 
-            return build_result
+            return result
 
+        except Exception as e:
+            logger.error(f"Build job {job_id} failed: {str(e)}")
+            return {
+                'status': 'error',
+                'error': str(e),
+                'metadata': metadata
+            }
         finally:
             # Always cleanup the server
+            logger.info(f"Cleaning up server for job {job_id}")
             self.stop_server(job_id)
