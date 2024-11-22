@@ -4,11 +4,15 @@ Orchestrator to spin up Minecraft servers, run Minecraft agents, save buildings,
 
 Please join our [Discord](https://discord.gg/qmsrd7zH) to follow discussions, help plan the roadmap and hear about next steps.
 
+## System Architecture
+
+![System Architecture Diagram](system.svg)
+
 ## Setup
 
 ### Prerequisites
 
-- Docker
+- Docker 
 - Python 3.7+
 - Docker Compose
 - Redis
