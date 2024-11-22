@@ -42,6 +42,8 @@ services:
       DEFAULT_TIME: "6000"
       TIME_LOCK: "6000"
       EXISTING_OPS_FILE: "SYNCHRONIZE"
+      PLUGINS: |
+        https://dev.bukkit.org/projects/worldedit/files/5168643/download
       PAPER_SPIGOT_YAML: |
         settings:
           spam-limiter:
@@ -111,6 +113,7 @@ services:
     volumes:
       - ./data:/data
       - ./ops.json:/data/ops.json
+      - ./plugins:/data/plugins
     tty: true
     stdin_open: true
     restart: unless-stopped

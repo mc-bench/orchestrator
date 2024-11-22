@@ -219,6 +219,9 @@ class MinecraftServerManager:
                 logger.debug(f"Command '{cmd}': {response}")
                 time.sleep(0.1)  # Small delay between commands
 
+        # Op the bot player after the world is prepared
+        self.op_players(llm_id, ["Builder"])
+
         logger.info(f"Building area prepared for server {llm_id}")
 
     def stop_server(self, llm_id):
@@ -303,7 +306,39 @@ class MinecraftServerManager:
             from mineflayer import build_structure
             logger.info(f"Executing build for job {job_id}")
             result = build_structure(function_definition, metadata)
-            logger.info(f"Build completed for job {job_id}")
+            
+            if result['status'] == 'success':
+                container_name = f"mc-llm-{server_info['server_id']}"
+                # Possible paths to check
+                possible_paths = [
+                    f"/data/plugins/WorldEdit/schematics/{result['structure_name']}.schem",
+                    f"/data/worldedit/schematics/{result['structure_name']}.schem",
+                    f"/data/plugins/worldedit/schematics/{result['structure_name']}.schem",
+                ]
+
+                try:
+                    container = self.client.containers.get(container_name)
+                    # Create local structures directory
+                    os.makedirs('structures', exist_ok=True)
+                    found = False
+                    for structure_path in possible_paths:
+                        try:
+                            bits, stat = container.get_archive(structure_path)
+                            with open(f"structures/{result['structure_name']}.schem", 'wb') as f:
+                                for chunk in bits:
+                                    f.write(chunk)
+                            logger.info(f"Structure exported to structures/{result['structure_name']}.schem")
+                            result['structure_file'] = f"structures/{result['structure_name']}.schem"
+                            found = True
+                            break
+                        except Exception as e:
+                            logger.warning(f"Structure not found at {structure_path}: {e}")
+                    if not found:
+                        logger.error("Failed to export structure: No valid structure file found.")
+                        result['structure_export_error'] = "No valid structure file found."
+                except Exception as e:
+                    logger.error(f"Failed to export structure: {e}")
+                    result['structure_export_error'] = str(e)
 
             return result
 

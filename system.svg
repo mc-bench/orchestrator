@@ -1,109 +1,124 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900">
-    <!-- Gradients -->
+    <!-- Enhanced Gradients -->
     <defs>
-        <linearGradient id="clientGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#f0f9ff;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#e0f2fe;stop-opacity:1" />
+        <linearGradient id="clientGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#f0f9ff;stop-opacity:0.95" />
+            <stop offset="50%" style="stop-color:#e0f2fe;stop-opacity:0.97" />
+            <stop offset="100%" style="stop-color:#bae6fd;stop-opacity:0.95" />
         </linearGradient>
-        <linearGradient id="serviceGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#faf5ff;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#f3e8ff;stop-opacity:1" />
+        <linearGradient id="serviceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#faf5ff;stop-opacity:0.95" />
+            <stop offset="50%" style="stop-color:#f3e8ff;stop-opacity:0.97" />
+            <stop offset="100%" style="stop-color:#e9d5ff;stop-opacity:0.95" />
         </linearGradient>
-        <linearGradient id="serverGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#eff6ff;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#dbeafe;stop-opacity:1" />
+        <linearGradient id="serverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#eff6ff;stop-opacity:0.95" />
+            <stop offset="50%" style="stop-color:#dbeafe;stop-opacity:0.97" />
+            <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:0.95" />
         </linearGradient>
-        <linearGradient id="execGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#f0fdfa;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#ccfbf1;stop-opacity:1" />
+        <linearGradient id="execGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#f0fdfa;stop-opacity:0.95" />
+            <stop offset="50%" style="stop-color:#ccfbf1;stop-opacity:0.97" />
+            <stop offset="100%" style="stop-color:#99f6e4;stop-opacity:0.95" />
         </linearGradient>
+        
+        <!-- Enhanced shadows -->
         <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.2"/>
+            <feDropShadow dx="2" dy="2" stdDeviation="4" flood-opacity="0.15"/>
+            <feDropShadow dx="1" dy="1" stdDeviation="1" flood-opacity="0.2"/>
         </filter>
-        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
-                markerWidth="6" markerHeight="6" orient="auto">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+        
+        <!-- Improved arrow marker -->
+        <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6"
+                markerWidth="8" markerHeight="8" orient="auto">
+            <path d="M 0 1 L 10 6 L 0 11 Q 3 6 0 1" fill="#64748b"/>
         </marker>
+        
+        <!-- Glow effect -->
+        <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
     </defs>
 
-    <!-- Background layers with modern styling -->
+    <!-- Background layers with enhanced styling -->
     <!-- Client Layer -->
-    <rect x="50" y="50" width="900" height="120" rx="20" fill="url(#clientGrad)" stroke="#bae6fd" stroke-width="2"/>
-    <text x="70" y="85" font-family="Arial" font-size="16" font-weight="bold" fill="#0369a1">Client Layer</text>
+    <rect x="50" y="50" width="900" height="120" rx="24" fill="url(#clientGrad)" stroke="#bae6fd" stroke-width="2" filter="url(#shadow)"/>
+    <text x="70" y="85" font-family="Inter, Arial" font-size="18" font-weight="600" fill="#0369a1">Client Layer</text>
 
     <!-- Build Service Layer -->
-    <rect x="50" y="200" width="900" height="200" rx="20" fill="url(#serviceGrad)" stroke="#e9d5ff" stroke-width="2"/>
-    <text x="70" y="235" font-family="Arial" font-size="16" font-weight="bold" fill="#7c3aed">Build Service Layer</text>
+    <rect x="50" y="200" width="900" height="200" rx="24" fill="url(#serviceGrad)" stroke="#e9d5ff" stroke-width="2" filter="url(#shadow)"/>
+    <text x="70" y="235" font-family="Inter, Arial" font-size="18" font-weight="600" fill="#7c3aed">Build Service Layer</text>
 
     <!-- Server Management Layer -->
-    <rect x="50" y="430" width="900" height="180" rx="20" fill="url(#serverGrad)" stroke="#bfdbfe" stroke-width="2"/>
-    <text x="70" y="465" font-family="Arial" font-size="16" font-weight="bold" fill="#2563eb">Server Management Layer</text>
+    <rect x="50" y="430" width="900" height="180" rx="24" fill="url(#serverGrad)" stroke="#bfdbfe" stroke-width="2" filter="url(#shadow)"/>
+    <text x="70" y="465" font-family="Inter, Arial" font-size="18" font-weight="600" fill="#2563eb">Server Management Layer</text>
 
-    <!-- Build Execution Layer - Now showing multiple instances -->
+    <!-- Build Execution Layer with 3D effect -->
     <g transform="translate(0, 640)">
-        <!-- Base layer -->
-        <rect x="50" y="0" width="900" height="200" rx="20" fill="url(#execGrad)" stroke="#99f6e4" stroke-width="2"/>
-        <!-- Stacked layers to show scaling -->
-        <rect x="60" y="10" width="880" height="200" rx="20" fill="url(#execGrad)" stroke="#99f6e4" stroke-width="2" opacity="0.6"/>
-        <rect x="70" y="20" width="860" height="200" rx="20" fill="url(#execGrad)" stroke="#99f6e4" stroke-width="2" opacity="0.3"/>
-        <text x="70" y="45" font-family="Arial" font-size="16" font-weight="bold" fill="#0d9488">Build Execution Layer (Scales to N)</text>
+        <rect x="70" y="20" width="860" height="200" rx="24" fill="url(#execGrad)" stroke="#99f6e4" stroke-width="2" opacity="0.3" filter="url(#shadow)"/>
+        <rect x="60" y="10" width="880" height="200" rx="24" fill="url(#execGrad)" stroke="#99f6e4" stroke-width="2" opacity="0.6" filter="url(#shadow)"/>
+        <rect x="50" y="0" width="900" height="200" rx="24" fill="url(#execGrad)" stroke="#99f6e4" stroke-width="2" filter="url(#shadow)"/>
+        <text x="70" y="35" font-family="Inter, Arial" font-size="18" font-weight="600" fill="#0d9488">Build Execution Layer</text>
     </g>
 
-    <!-- Components -->
+    <!-- Components with enhanced styling -->
     <!-- Client Components -->
-    <rect x="150" y="90" width="160" height="60" rx="12" fill="#ffffff" stroke="#38bdf8" stroke-width="2" filter="url(#shadow)"/>
-    <text x="230" y="125" font-family="Arial" font-size="14" text-anchor="middle" fill="#0284c7">Build Request</text>
+    <rect x="150" y="90" width="160" height="60" rx="16" fill="#ffffff" stroke="#38bdf8" stroke-width="2.5" filter="url(#glow)"/>
+    <text x="230" y="125" font-family="Inter, Arial" font-size="15" font-weight="500" text-anchor="middle" fill="#0284c7">Build Request</text>
 
-    <rect x="400" y="90" width="160" height="60" rx="12" fill="#ffffff" stroke="#38bdf8" stroke-width="2" filter="url(#shadow)"/>
-    <text x="480" y="125" font-family="Arial" font-size="14" text-anchor="middle" fill="#0284c7">Redis Queue</text>
+    <rect x="400" y="90" width="160" height="60" rx="16" fill="#ffffff" stroke="#38bdf8" stroke-width="2.5" filter="url(#glow)"/>
+    <text x="480" y="125" font-family="Inter, Arial" font-size="15" font-weight="500" text-anchor="middle" fill="#0284c7">Redis Queue</text>
 
     <!-- Build Service Component -->
-    <rect x="275" y="270" width="450" height="80" rx="12" fill="#ffffff" stroke="#a855f7" stroke-width="2" filter="url(#shadow)"/>
-    <text x="500" y="305" font-family="Arial" font-size="14" text-anchor="middle" fill="#7c3aed">Build Service</text>
-    <text x="500" y="325" font-family="Arial" font-size="12" text-anchor="middle" fill="#6b7280">(build_service.py)</text>
+    <rect x="275" y="270" width="450" height="80" rx="16" fill="#ffffff" stroke="#a855f7" stroke-width="2.5" filter="url(#glow)"/>
+    <text x="500" y="305" font-family="Inter, Arial" font-size="15" font-weight="500" text-anchor="middle" fill="#7c3aed">Build Service</text>
+    <text x="500" y="325" font-family="Inter, Arial" font-size="13" text-anchor="middle" fill="#6b7280">(build_service.py)</text>
 
     <!-- Server Management Components -->
-    <rect x="150" y="490" width="200" height="80" rx="12" fill="#ffffff" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
-    <text x="250" y="525" font-family="Arial" font-size="14" text-anchor="middle" fill="#1d4ed8">Server Manager</text>
-    <text x="250" y="545" font-family="Arial" font-size="12" text-anchor="middle" fill="#6b7280">(server_manager.py)</text>
+    <rect x="150" y="490" width="200" height="80" rx="16" fill="#ffffff" stroke="#3b82f6" stroke-width="2.5" filter="url(#glow)"/>
+    <text x="250" y="525" font-family="Inter, Arial" font-size="15" font-weight="500" text-anchor="middle" fill="#1d4ed8">Server Manager</text>
+    <text x="250" y="545" font-family="Inter, Arial" font-size="13" text-anchor="middle" fill="#6b7280">(server_manager.py)</text>
 
-    <!-- Multiple Docker Containers -->
+    <!-- Docker Containers with 3D stack effect -->
     <g transform="translate(400, 490)">
-        <!-- Container Stack -->
-        <rect x="0" y="0" width="160" height="60" rx="8" fill="#ffffff" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
-        <rect x="10" y="10" width="160" height="60" rx="8" fill="#ffffff" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
-        <rect x="20" y="20" width="160" height="60" rx="8" fill="#ffffff" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
-        <text x="100" y="55" font-family="Arial" font-size="14" text-anchor="middle" fill="#1d4ed8">Docker Containers</text>
-        <text x="100" y="73" font-family="Arial" font-size="12" text-anchor="middle" fill="#6b7280">(Minecraft Servers)</text>
+        <rect x="20" y="20" width="160" height="60" rx="12" fill="#ffffff" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+        <rect x="10" y="10" width="160" height="60" rx="12" fill="#ffffff" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+        <rect x="0" y="0" width="160" height="60" rx="12" fill="#ffffff" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+        <text x="80" y="35" font-family="Inter, Arial" font-size="15" font-weight="500" text-anchor="middle" fill="#1d4ed8">Docker Containers</text>
+        <text x="80" y="53" font-family="Inter, Arial" font-size="13" text-anchor="middle" fill="#6b7280">(Minecraft Servers)</text>
     </g>
 
-    <rect x="650" y="490" width="200" height="80" rx="12" fill="#ffffff" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
-    <text x="750" y="525" font-family="Arial" font-size="14" text-anchor="middle" fill="#1d4ed8">RCON Connections</text>
-    <text x="750" y="545" font-family="Arial" font-size="12" text-anchor="middle" fill="#6b7280">(Server Control)</text>
+    <rect x="650" y="490" width="200" height="80" rx="16" fill="#ffffff" stroke="#3b82f6" stroke-width="2.5" filter="url(#glow)"/>
+    <text x="750" y="525" font-family="Inter, Arial" font-size="15" font-weight="500" text-anchor="middle" fill="#1d4ed8">RCON Connections</text>
+    <text x="750" y="545" font-family="Inter, Arial" font-size="13" text-anchor="middle" fill="#6b7280">(Server Control)</text>
 
-    <!-- Build Execution Components - Single instance shown -->
+    <!-- Build Execution Components -->
     <g transform="translate(0, 670)">
-        <rect x="150" y="20" width="200" height="60" rx="12" fill="#ffffff" stroke="#14b8a6" stroke-width="2" filter="url(#shadow)"/>
-        <text x="250" y="55" font-family="Arial" font-size="14" text-anchor="middle" fill="#0d9488">Mineflayer Bot</text>
-        <text x="250" y="73" font-family="Arial" font-size="12" text-anchor="middle" fill="#6b7280">(mineflayer.py)</text>
+        <rect x="150" y="40" width="200" height="60" rx="16" fill="#ffffff" stroke="#14b8a6" stroke-width="2.5" filter="url(#glow)"/>
+        <text x="250" y="75" font-family="Inter, Arial" font-size="15" font-weight="500" text-anchor="middle" fill="#0d9488">Mineflayer Bot</text>
+        <text x="250" y="93" font-family="Inter, Arial" font-size="13" text-anchor="middle" fill="#6b7280">(mineflayer.py)</text>
 
-        <rect x="400" y="20" width="200" height="60" rx="12" fill="#ffffff" stroke="#14b8a6" stroke-width="2" filter="url(#shadow)"/>
-        <text x="500" y="55" font-family="Arial" font-size="14" text-anchor="middle" fill="#0d9488">Command Queue</text>
+        <rect x="400" y="40" width="200" height="60" rx="16" fill="#ffffff" stroke="#14b8a6" stroke-width="2.5" filter="url(#glow)"/>
+        <text x="500" y="75" font-family="Inter, Arial" font-size="15" font-weight="500" text-anchor="middle" fill="#0d9488">Command Queue</text>
 
-        <rect x="650" y="20" width="200" height="60" rx="12" fill="#ffffff" stroke="#14b8a6" stroke-width="2" filter="url(#shadow)"/>
-        <text x="750" y="55" font-family="Arial" font-size="14" text-anchor="middle" fill="#0d9488">Coordinate Tracker</text>
+        <rect x="650" y="40" width="200" height="60" rx="16" fill="#ffffff" stroke="#14b8a6" stroke-width="2.5" filter="url(#glow)"/>
+        <text x="750" y="75" font-family="Inter, Arial" font-size="15" font-weight="500" text-anchor="middle" fill="#0d9488">Coordinate Tracker</text>
     </g>
 
-    <!-- Arrows with improved styling -->
-    <path d="M 310 120 L 400 120" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
-    <path d="M 480 150 L 480 270" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
-    <path d="M 500 350 L 250 490" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
-    <path d="M 350 530 L 400 530" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
-    <path d="M 600 530 L 650 530" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
-    <path d="M 500 570 L 250 690" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
-    <path d="M 350 720 L 400 720" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
-    <path d="M 600 720 L 650 720" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+    <!-- Enhanced flow arrows -->
+    <path d="M 310 120 Q 355 120 400 120" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <path d="M 480 150 Q 480 210 480 270" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <path d="M 500 350 Q 375 420 250 490" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <path d="M 350 530 Q 375 530 400 530" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <path d="M 600 530 Q 625 530 650 530" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <path d="M 500 570 Q 375 630 250 710" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <path d="M 350 740 Q 375 740 400 740" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <path d="M 600 740 Q 625 740 650 740" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
 
-    <!-- Scale indicators -->
-    <text x="530" y="500" font-family="Arial" font-size="12" fill="#6b7280">Scale to N</text>
+    <!-- Scale indicator with enhanced styling -->
+    <text x="540" y="485" font-family="Inter, Arial" font-size="13" font-weight="500" fill="#64748b">Scales to N</text>
 </svg>

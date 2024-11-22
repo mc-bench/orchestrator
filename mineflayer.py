@@ -33,7 +33,7 @@ def build_structure(function_definition, metadata=None):
             logger.info(f"Author: {metadata.get('author', 'Unknown')}")
             logger.info(f"Description: {metadata.get('description', 'No description')}")
 
-        BOT_USERNAME = f'Builder'
+        BOT_USERNAME = 'Builder'
 
         # Add retry logic for bot connection
         max_retries = 3
@@ -94,6 +94,11 @@ def build_structure(function_definition, metadata=None):
         # Execute the build
         logger.info("Starting build execution")
         buildCreation(function_definition)
+        
+        # Wait for commands to complete
+        logger.info("Waiting for build commands to complete")
+        while commandQueue.isProcessing:
+            time.sleep(0.5)
 
         # Save structure
         structure_name = STRUCTURE_NAME
@@ -104,6 +109,9 @@ def build_structure(function_definition, metadata=None):
         logger.info("Waiting for all commands to complete")
         while commandQueue.isProcessing:
             time.sleep(0.5)
+        
+        # Wait for commands to complete
+        time.sleep(1)
 
         # Clean exit
         logger.info("Build completed, disconnecting bot")
@@ -150,6 +158,12 @@ class CommandQueue:
         while self.queue:
             command = self.queue.pop(0)
             try:
+                def handle_chat(username, message):
+                    if username == 'Server':
+                        self.logger.info(f"Command response: {message}")
+                    bot.remove_listener('chat', handle_chat)
+
+                bot.on('chat', handle_chat)
                 bot.chat(command)
                 self.logger.info(f'Executed command: {command}')
             except Exception as e:
@@ -290,12 +304,21 @@ def saveStructure(name):
         logger.warning('No blocks placed yet to create structure')
         return
 
-    min_coords = f"{boundingBox['min']['x']} {boundingBox['min']['y']} {boundingBox['min']['z']}"
-    max_coords = f"{boundingBox['max']['x']} {boundingBox['max']['y']} {boundingBox['max']['z']}"
+    min_x, min_y, min_z = boundingBox['min']['x'], boundingBox['min']['y'], boundingBox['min']['z']
+    max_x, max_y, max_z = boundingBox['max']['x'], boundingBox['max']['y'], boundingBox['max']['z']
 
-    command = f"/structure save {name} {min_coords} {max_coords}"
-    commandQueue.add(command)
-    logger.info(f"Structure saved: {name} from {min_coords} to {max_coords}")
+    # Use WorldEdit commands to select and copy the region
+    commandQueue.add(f"//pos1 {min_x},{min_y},{min_z}")
+    commandQueue.add(f"//pos2 {max_x},{max_y},{max_z}")
+    commandQueue.add("//copy")  # Copy the selection to clipboard
+
+    # Save the copied selection to a schematic file
+    commandQueue.add(f"//schem save {name}")
+
+    # Verify the save worked
+    commandQueue.add(f"//schem list")
+
+    logger.info(f"Structure saved: {name} from ({min_x}, {min_y}, {min_z}) to ({max_x}, {max_y}, {max_z})")
 
 def buildCreation(functionDefinition):
     logger = logging.getLogger(__name__ + '.buildCreation')

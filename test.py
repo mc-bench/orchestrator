@@ -25,42 +25,20 @@ celery_app = Celery('minecraft_builder',
 celery_app.conf.update(
     task_default_queue=CELERY_QUEUE,
 )
-
-# Example build function that creates a small house
+# Example build function that creates a small test structure
 build_data = {
     'function_definition': """
-# Floor
-for x in range(5):
-    for z in range(5):
-        safeSetBlock(x, 0, z, 'stone')
-
-# Walls
-for y in range(4):
-    for x in range(5):
-        safeSetBlock(x, y+1, 0, 'oak_planks')  # Front wall
-        safeSetBlock(x, y+1, 4, 'oak_planks')  # Back wall
-    for z in range(5):
-        safeSetBlock(0, y+1, z, 'oak_planks')  # Left wall
-        safeSetBlock(4, y+1, z, 'oak_planks')  # Right wall
-
-# Door
-safeSetBlock(2, 1, 0, 'oak_door', {'half': 'lower'})
-safeSetBlock(2, 2, 0, 'oak_door', {'half': 'upper'})
-
-# Windows
-safeSetBlock(1, 2, 0, 'glass')
-safeSetBlock(3, 2, 0, 'glass')
-
-# Roof
-for x in range(5):
-    for z in range(5):
-        safeSetBlock(x, 4, z, 'oak_planks')""",
+# Simple 2x2x2 cube
+for x in range(2):
+    for y in range(2):
+        for z in range(2):
+            safeSetBlock(x, y, z, 'stone')""",
     'metadata': {
-        'name': 'Simple House',
-        'author': 'TestBuilder', 
-        'version': '1.0',
-        'description': 'A basic 5x5 house with door and windows',
-        'tags': ['house', 'basic', 'test'],
+        'name': 'Test Cube',
+        'author': 'TestBuilder',
+        'version': '1.0', 
+        'description': 'A simple 2x2x2 cube for testing',
+        'tags': ['test', 'cube', 'simple'],
         'created_at': time.strftime("%Y-%m-%dT%H-%M-%S")
     }
 }
