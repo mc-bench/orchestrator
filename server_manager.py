@@ -219,6 +219,9 @@ class MinecraftServerManager:
                 logger.debug(f"Command '{cmd}': {response}")
                 time.sleep(0.1)  # Small delay between commands
 
+        # Op the bot player after the world is prepared
+        self.op_players(llm_id, ["Builder"])
+
         logger.info(f"Building area prepared for server {llm_id}")
 
     def stop_server(self, llm_id):
@@ -306,47 +309,37 @@ class MinecraftServerManager:
             
             if result['status'] == 'success':
                 container_name = f"mc-llm-{server_info['server_id']}"
-                # Update path to match Minecraft's structure directory
-                structure_path = f"/data/world/generated/minecraft/structures/{result['structure_name']}.nbt"
-                
+                # Possible paths to check
+                possible_paths = [
+                    f"/data/plugins/WorldEdit/schematics/{result['structure_name']}.schem",
+                    f"/data/worldedit/schematics/{result['structure_name']}.schem",
+                    f"/data/plugins/worldedit/schematics/{result['structure_name']}.schem",
+                ]
+
                 try:
                     container = self.client.containers.get(container_name)
-                    
                     # Create local structures directory
                     os.makedirs('structures', exist_ok=True)
-                    
-                    # Try to copy the structure file
-                    try:
-                        bits, stat = container.get_archive(structure_path)
-                        with open(f"structures/{result['structure_name']}.nbt", 'wb') as f:
-                            for chunk in bits:
-                                f.write(chunk)
-                        logger.info(f"Structure exported to structures/{result['structure_name']}.nbt")
-                        result['structure_file'] = f"structures/{result['structure_name']}.nbt"
-                    except Exception as e:
-                        logger.error(f"Failed to export structure: {e}")
-                        # List all contents recursively to help debug
+                    found = False
+                    for structure_path in possible_paths:
                         try:
-                            exec_result = container.exec_run("find /data/world -type f -name '*.nbt'")
-                            logger.info(f"Found .nbt files: {exec_result.output.decode()}")
-                        except Exception as dir_error:
-                            logger.error(f"Failed to search for .nbt files: {dir_error}")
-                        raise e
-
+                            bits, stat = container.get_archive(structure_path)
+                            with open(f"structures/{result['structure_name']}.schem", 'wb') as f:
+                                for chunk in bits:
+                                    f.write(chunk)
+                            logger.info(f"Structure exported to structures/{result['structure_name']}.schem")
+                            result['structure_file'] = f"structures/{result['structure_name']}.schem"
+                            found = True
+                            break
+                        except Exception as e:
+                            logger.warning(f"Structure not found at {structure_path}: {e}")
+                    if not found:
+                        logger.error("Failed to export structure: No valid structure file found.")
+                        result['structure_export_error'] = "No valid structure file found."
                 except Exception as e:
                     logger.error(f"Failed to export structure: {e}")
                     result['structure_export_error'] = str(e)
-                    # Add more detailed error information
-                    logger.error(f"Container name: {container_name}")
-                    logger.error(f"Attempted paths: {structure_path}")
-                    
-                    # List all contents recursively to find the structure file
-                    try:
-                        exec_result = container.exec_run("find /data/world -name '*.nbt'")
-                        logger.info(f"Found .nbt files: {exec_result.output.decode()}")
-                    except Exception as dir_error:
-                        logger.error(f"Failed to search for .nbt files: {dir_error}")
-            
+
             return result
 
         except Exception as e:
