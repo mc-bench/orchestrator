@@ -16,6 +16,7 @@ Please join our [Discord](https://discord.gg/rM286W7J) to follow discussions, he
 - Python 3.7+
 - Docker Compose
 - Redis
+- Node.js 12+ and npm (for mineflayer)
 
 ### Installation
 
