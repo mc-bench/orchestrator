@@ -94,6 +94,11 @@ def build_structure(function_definition, metadata=None):
         # Execute the build
         logger.info("Starting build execution")
         buildCreation(function_definition)
+        
+        # Wait for commands to complete
+        logger.info("Waiting for build commands to complete")
+        while commandQueue.isProcessing:
+            time.sleep(0.5)
 
         # Save structure
         structure_name = STRUCTURE_NAME
@@ -293,9 +298,17 @@ def saveStructure(name):
     min_coords = f"{boundingBox['min']['x']} {boundingBox['min']['y']} {boundingBox['min']['z']}"
     max_coords = f"{boundingBox['max']['x']} {boundingBox['max']['y']} {boundingBox['max']['z']}"
 
-    command = f"/structure save {name} {min_coords} {max_coords}"
+    # Save structure with include-entities false to reduce file size
+    command = f"/structure save {name} {min_coords} {max_coords} false disk"
     commandQueue.add(command)
     logger.info(f"Structure saved: {name} from {min_coords} to {max_coords}")
+    
+    print("Please check the structure file in the world/structures directory")
+    time.sleep(50000000)
+    
+    # Verify the save worked by attempting to load it
+    verify_command = f"/structure load {name} {min_coords}"
+    commandQueue.add(verify_command)
 
 def buildCreation(functionDefinition):
     logger = logging.getLogger(__name__ + '.buildCreation')

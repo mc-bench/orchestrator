@@ -303,8 +303,50 @@ class MinecraftServerManager:
             from mineflayer import build_structure
             logger.info(f"Executing build for job {job_id}")
             result = build_structure(function_definition, metadata)
-            logger.info(f"Build completed for job {job_id}")
+            
+            if result['status'] == 'success':
+                container_name = f"mc-llm-{server_info['server_id']}"
+                # Update path to match Minecraft's structure directory
+                structure_path = f"/data/world/generated/minecraft/structures/{result['structure_name']}.nbt"
+                
+                try:
+                    container = self.client.containers.get(container_name)
+                    
+                    # Create local structures directory
+                    os.makedirs('structures', exist_ok=True)
+                    
+                    # Try to copy the structure file
+                    try:
+                        bits, stat = container.get_archive(structure_path)
+                        with open(f"structures/{result['structure_name']}.nbt", 'wb') as f:
+                            for chunk in bits:
+                                f.write(chunk)
+                        logger.info(f"Structure exported to structures/{result['structure_name']}.nbt")
+                        result['structure_file'] = f"structures/{result['structure_name']}.nbt"
+                    except Exception as e:
+                        logger.error(f"Failed to export structure: {e}")
+                        # List all contents recursively to help debug
+                        try:
+                            exec_result = container.exec_run("find /data/world -type f -name '*.nbt'")
+                            logger.info(f"Found .nbt files: {exec_result.output.decode()}")
+                        except Exception as dir_error:
+                            logger.error(f"Failed to search for .nbt files: {dir_error}")
+                        raise e
 
+                except Exception as e:
+                    logger.error(f"Failed to export structure: {e}")
+                    result['structure_export_error'] = str(e)
+                    # Add more detailed error information
+                    logger.error(f"Container name: {container_name}")
+                    logger.error(f"Attempted paths: {structure_path}")
+                    
+                    # List all contents recursively to find the structure file
+                    try:
+                        exec_result = container.exec_run("find /data/world -name '*.nbt'")
+                        logger.info(f"Found .nbt files: {exec_result.output.decode()}")
+                    except Exception as dir_error:
+                        logger.error(f"Failed to search for .nbt files: {dir_error}")
+            
             return result
 
         except Exception as e:
