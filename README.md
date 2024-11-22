@@ -2,7 +2,7 @@
 
 Orchestrator to spin up Minecraft servers, run Minecraft agents, save buildings, and prepare for evaluation.
 
-Please join our [Discord](https://discord.gg/qmsrd7zH) to follow discussions, help plan the roadmap and hear about next steps.
+Please join our [Discord](https://discord.gg/rM286W7J) to follow discussions, help plan the roadmap and hear about next steps.
 
 ## System Architecture
 
