@@ -17,7 +17,7 @@ HOST = os.getenv('HOST', '127.0.0.1')
 PORT = int(os.getenv('PORT', '25565'))
 VERSION = os.getenv('VERSION', '1.20.4')
 USERNAME = os.getenv('USERNAME', 'builder')
-DELAY = int(os.getenv('DELAY', '1000'))  # Increased delay to prevent spamming
+DELAY = int(os.getenv('DELAY', '250'))  # Reduced delay from 1000ms to 250ms
 STRUCTURE_NAME = os.getenv('STRUCTURE_NAME', f'structure_{time.strftime("%Y-%m-%dT%H-%M-%S")}')
 
 def build_structure(function_definition, metadata=None):
@@ -225,30 +225,101 @@ def safeSetBlock(x, y, z, blockType, options={}):
     # Ensure coordinates are integers
     x, y, z = map(int, (x, y, z))
     try:
-        # Add minecraft: namespace if not present
-        fullBlockType = blockType if ':' in blockType else f'minecraft:{blockType}'
-        command = f"/setblock {x} {y} {z} {fullBlockType}"
+        # Only batch if no special block states or modes are specified
+        can_batch = not (options.get('blockStates') or options.get('mode'))
+        
+        if can_batch:
+            # Initialize batch if it doesn't exist
+            if not hasattr(safeSetBlock, 'batch'):
+                safeSetBlock.batch = {'blockType': None, 'coords': [], 'options': {}}
 
-        # Add block states if provided
-        blockStates = options.get('blockStates')
-        if blockStates and blockStates.keys():
-            stateString = ','.join([f"{key}={value}" for key, value in blockStates.items()])
-            command += f'[{stateString}]'
+            # Check if we can add to existing batch
+            if (safeSetBlock.batch['blockType'] == blockType and 
+                len(safeSetBlock.batch['coords']) < 32768):  # Minecraft fill limit
+                # Check if new block is adjacent to any existing block
+                if not safeSetBlock.batch['coords'] or any(
+                    abs(x - cx) <= 1 and abs(y - cy) <= 1 and abs(z - cz) <= 1 
+                    for cx, cy, cz in safeSetBlock.batch['coords']):
+                    safeSetBlock.batch['coords'].append((x, y, z))
+                    return
 
-        # Add placement mode if provided
-        mode = options.get('mode')
-        if mode:
-            validModes = ['replace', 'destroy', 'keep']
-            if mode not in validModes:
-                raise ValueError(f"Invalid placement mode: {mode}. Must be one of: {', '.join(validModes)}")
-            command += f' {mode}'
+            # Process existing batch if we have one
+            if safeSetBlock.batch['coords']:
+                _process_batch(safeSetBlock.batch)
 
-        commandQueue.add(command)
-        coordinateTracker.addCoordinate(x, y, z)
-        logger.debug(f"Block placed at ({x}, {y}, {z}): {fullBlockType}")
+            # Start new batch
+            safeSetBlock.batch = {
+                'blockType': blockType,
+                'coords': [(x, y, z)],
+                'options': options.copy()  # Store options with the batch
+            }
+        else:
+            # Handle individual block placement with states/modes
+            fullBlockType = blockType if ':' in blockType else f'minecraft:{blockType}'
+            command = f"/setblock {x} {y} {z} {fullBlockType}"
+
+            # Add block states if provided
+            blockStates = options.get('blockStates')
+            if blockStates and blockStates.keys():
+                stateString = ','.join([f"{key}={value}" for key, value in blockStates.items()])
+                command += f'[{stateString}]'
+
+            # Add placement mode if provided
+            mode = options.get('mode')
+            if mode:
+                validModes = ['replace', 'destroy', 'keep']
+                if mode not in validModes:
+                    raise ValueError(f"Invalid placement mode: {mode}. Must be one of: {', '.join(validModes)}")
+                command += f' {mode}'
+
+            commandQueue.add(command)
+            coordinateTracker.addCoordinate(x, y, z)
+            logger.debug(f"Individual block placed at ({x}, {y}, {z}): {command}")
+
     except Exception as e:
         logger.error(f"Error placing block at {x} {y} {z}: {e}")
         raise e
+
+def _process_batch(batch):
+    """Helper function to process a batch of blocks"""
+    if not batch['coords']:
+        return
+
+    coords = batch['coords']
+    min_x = min(c[0] for c in coords)
+    max_x = max(c[0] for c in coords)
+    min_y = min(c[1] for c in coords)
+    max_y = max(c[1] for c in coords)
+    min_z = min(c[2] for c in coords)
+    max_z = max(c[2] for c in coords)
+    
+    # If the batch is larger than 1x1x1 and forms a rectangular prism, use fill
+    if ((max_x - min_x > 0 or max_y - min_y > 0 or max_z - min_z > 0) and
+        len(coords) == (max_x - min_x + 1) * (max_y - min_y + 1) * (max_z - min_z + 1)):
+        safeFill(min_x, min_y, min_z, max_x, max_y, max_z, batch['blockType'], batch['options'])
+    else:
+        # For non-rectangular shapes or single blocks, use setblock
+        for x, y, z in coords:
+            fullBlockType = batch['blockType'] if ':' in batch['blockType'] else f'minecraft:{batch["blockType"]}'
+            command = f"/setblock {x} {y} {z} {fullBlockType}"
+            
+            # Add block states if provided
+            blockStates = batch['options'].get('blockStates')
+            if blockStates and blockStates.keys():
+                stateString = ','.join([f"{key}={value}" for key, value in blockStates.items()])
+                command += f'[{stateString}]'
+
+            # Add placement mode if provided
+            mode = batch['options'].get('mode')
+            if mode:
+                validModes = ['replace', 'destroy', 'keep']
+                if mode not in validModes:
+                    raise ValueError(f"Invalid placement mode: {mode}. Must be one of: {', '.join(validModes)}")
+                command += f' {mode}'
+
+            commandQueue.add(command)
+            coordinateTracker.addCoordinate(x, y, z)
+            logger.debug(f"Batch block placed at ({x}, {y}, {z}): {command}")
 
 def safeFill(x1, y1, z1, x2, y2, z2, blockType, options={}):
     logger = logging.getLogger(__name__ + '.safeFill')
@@ -292,7 +363,7 @@ def safeFill(x1, y1, z1, x2, y2, z2, blockType, options={}):
                 for z in [z1, z2]:
                     coordinateTracker.addCoordinate(x, y, z)
         
-        logger.debug(f"Fill command executed from ({x1},{y1},{z1}) to ({x2},{y2},{z2}): {fullBlockType}")
+        logger.debug(f"Fill command executed: {command}")
     except Exception as e:
         logger.error(f"Error filling from ({x1},{y1},{z1}) to ({x2},{y2},{z2}): {e}")
         raise e
@@ -325,6 +396,10 @@ def buildCreation(functionDefinition):
     logger.info("Starting build creation")
     try:
         exec(functionDefinition)
+        # Flush any remaining batched blocks
+        if hasattr(safeSetBlock, 'batch') and safeSetBlock.batch['coords']:
+            _process_batch(safeSetBlock.batch)
+            safeSetBlock.batch = {'blockType': None, 'coords': [], 'options': {}}
         logger.info("Build creation completed successfully")
     except Exception as e:
         logger.error(f"Error during build creation: {e}")
